@@ -29,7 +29,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Run ls
+    - name: Copy templates
       shell: bash
       run: mv ${{ github.action_path }}/src/swagger-coverage .
 
@@ -44,20 +44,22 @@ runs:
       if: ${{ inputs.use-minimal-config }}
       shell: bash
       run: |
-        ./swagger-coverage-commandline/bin/swagger-coverage-commandline -q \
+        ./swagger-coverage-commandline/bin/swagger-coverage-commandline \
         -s ${{ inputs.spec-path }} \
         -i ${{ inputs.input-path }} \
-        -c ./swagger-coverage/config.minimal.json
+        -c ./swagger-coverage/config.minimal.json \
+        ${{ inputs.quiet && '-q' || ''}}
         cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Run coverage full
       if: ${{ inputs.use-full-config }}
       shell: bash
       run: |
-        ./swagger-coverage-commandline/bin/swagger-coverage-commandline -q \
+        ./swagger-coverage-commandline/bin/swagger-coverage-commandline \
         -s ${{ inputs.spec-path }} \
         -i ${{ inputs.input-path }} \
-        -c ./swagger-coverage/config.default.json
+        -c ./swagger-coverage/config.default.json \
+        ${{ inputs.quiet && '-q' || ''}}
 
     - name: Upload full coverage result
       if: ${{ inputs.use-full-config }}
