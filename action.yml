@@ -33,6 +33,7 @@ runs:
       with:
         path: 'action'
         repository: 'alekskulakov/ci.actions.swaggercoverage'
+        sparse-checkout: 'src/swagger-coverage'
         
     - run: |
         ls -R .
