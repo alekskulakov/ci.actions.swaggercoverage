@@ -1,0 +1,19 @@
+{
+    "rules": {
+        "only-declared-status": {
+            "enable": false
+        },
+        "not-empty-body": {
+            "enable": false
+        },
+        "exclude-deprecated": {
+            "enable": true
+        }
+    },
+    "writers": {
+        "html": {
+            "filename":"swagger-coverage-report.min.html",
+            "customTemplatePath": "./swagger-coverage/resources/report.ftl"
+        }
+    }
+}

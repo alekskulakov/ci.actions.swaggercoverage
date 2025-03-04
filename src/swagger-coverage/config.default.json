@@ -1,0 +1,13 @@
+{
+    "rules": {
+        "only-declared-status": {
+            "enable": false
+        },
+        "not-empty-body": {
+            "enable": false
+        },
+        "exclude-deprecated": {
+            "enable": true
+        }
+    }
+}

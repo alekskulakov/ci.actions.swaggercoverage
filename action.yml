@@ -1,0 +1,65 @@
+name: 'Run swagger-coverage'
+description: 'Build coverage report based on swagger specification'
+inputs:
+  spec-path:
+    description: 'Path to local or URL to remote swagger specification'
+    required: true
+    default: 'swagger.json'
+  input-path:
+    description: 'Path to folder with generated files with coverage'
+    required: true
+    default: 'swagger-coverage-output'
+  use-minimal-config:
+    description: 'Use minimal report template'
+    required: false
+    default: true
+  use-full-config:
+    description: 'Use full report template'
+    required: false
+    default: true
+  quiet:
+    description: 'Switch on the quiet mode'
+    required: false
+    default: true
+  verbose:
+    description: 'Switch on the verbose mode'
+    required: false
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      sparse-checkout: src/swagger-coverage
+
+    - run: ls -R .
+
+    - name: Download swagger-coverage tool
+      run: |
+        wget https://github.com/alekskulakov/swagger-coverage/releases/download/fix/swagger-coverage-commandline-1.5.1.zip
+        unzip swagger-coverage-commandline-1.5.1.zip
+        mv swagger-coverage-commandline-1.5.1 swagger-coverage-commandline
+
+    - name: Run swagger coverage minimal
+      if: ${{ inputs.use-minimal-config }}
+      run: |
+        ./swagger-coverage-commandline/bin/swagger-coverage-commandline -q \
+        -s ${{ inputs.spec-path }} \
+        -i ${{ inputs.input-path }} \
+        -c ./swagger-coverage/config.minimal.json
+        cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
+
+    - name: Run coverage full
+      if: ${{ inputs.use-full-config }}
+      run: |
+        ./swagger-coverage-commandline/bin/swagger-coverage-commandline -q \
+        -s ${{ inputs.spec-path }} \
+        -i ${{ inputs.input-path }} \
+        -c ./swagger-coverage/config.default.json
+
+    - name: Upload full coverage result
+      if: ${{ inputs.use-full-config }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: swagger-coverage-result
+        path: swagger-coverage-report.html
