@@ -29,11 +29,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Download templates
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
       shell: bash
-      run: |
-        wget https://github.com/alekskulakov/ci.actions.swaggercoverage/releases/download/v1.0.11/templates.zip
-        unzip templates.zip
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+
+    - name: Run ls
+      shell: bash
+      run: ls -R .
 
     - name: Download swagger-coverage tool
       shell: bash
