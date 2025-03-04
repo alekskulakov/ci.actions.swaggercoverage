@@ -42,6 +42,7 @@ runs:
         wget https://github.com/alekskulakov/swagger-coverage/releases/download/fix/swagger-coverage-commandline-1.5.1.zip
         unzip swagger-coverage-commandline-1.5.1.zip
         mv swagger-coverage-commandline-1.5.1 swagger-coverage-commandline
+        ls -R .
 
     - name: Run swagger coverage minimal
       if: ${{ inputs.use-minimal-config }}
