@@ -37,7 +37,7 @@ runs:
 
     - name: Run ls
       shell: bash
-      run: ls -R .
+      run: ls -R ${{ github.action_path }}
 
     - name: Download swagger-coverage tool
       shell: bash
