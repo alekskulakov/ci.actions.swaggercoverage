@@ -34,18 +34,15 @@ runs:
         path: 'action'
         repository: 'alekskulakov/ci.actions.swaggercoverage'
         
-    - run: |
-        ls -R .
-        mv ./action/src/swagger-coverage ./
+    - run: mv ./action/src/swagger-coverage ./
       shell: bash
 
     - name: Download swagger-coverage tool
       shell: bash
       run: |
-        wget https://github.com/alekskulakov/swagger-coverage/releases/download/fix/swagger-coverage-commandline-1.5.1.zip
+        wget https://github.com/dodopizza/qa.tools.swaggercoverage/releases/download/1.5.1/swagger-coverage-commandline-1.5.1.zip
         unzip swagger-coverage-commandline-1.5.1.zip
         mv swagger-coverage-commandline-1.5.1 swagger-coverage-commandline
-        ls -R .
 
     - name: Run swagger coverage minimal
       if: ${{ inputs.use-minimal-config }}
