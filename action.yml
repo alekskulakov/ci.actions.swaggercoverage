@@ -34,6 +34,7 @@ runs:
         sparse-checkout: src/swagger-coverage
 
     - run: ls -R .
+      shell: bash
 
     - name: Download swagger-coverage tool
       shell: bash
@@ -44,6 +45,7 @@ runs:
 
     - name: Run swagger coverage minimal
       if: ${{ inputs.use-minimal-config }}
+      shell: bash
       run: |
         ./swagger-coverage-commandline/bin/swagger-coverage-commandline -q \
         -s ${{ inputs.spec-path }} \
@@ -53,6 +55,7 @@ runs:
 
     - name: Run coverage full
       if: ${{ inputs.use-full-config }}
+      shell: bash
       run: |
         ./swagger-coverage-commandline/bin/swagger-coverage-commandline -q \
         -s ${{ inputs.spec-path }} \
