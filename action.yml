@@ -44,6 +44,7 @@ runs:
       if: ${{ inputs.use-minimal-config }}
       shell: bash
       run: |
+        echo '${{ inputs.quiet && '-q' || ''}}'
         ./swagger-coverage-commandline/bin/swagger-coverage-commandline \
         -s ${{ inputs.spec-path }} \
         -i ${{ inputs.input-path }} \
