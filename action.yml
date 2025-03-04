@@ -31,6 +31,7 @@ runs:
   steps:
     - uses: actions/checkout@v4
       with:
+        repository: 'alekskulakov/ci.actions.swaggercoverage'
         sparse-checkout: src/swagger-coverage
 
     - run: ls -R .
