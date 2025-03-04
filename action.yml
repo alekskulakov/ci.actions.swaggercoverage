@@ -30,11 +30,13 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v4
-      sparse-checkout: src/swagger-coverage
+      with:
+        sparse-checkout: src/swagger-coverage
 
     - run: ls -R .
 
     - name: Download swagger-coverage tool
+      shell: bash
       run: |
         wget https://github.com/alekskulakov/swagger-coverage/releases/download/fix/swagger-coverage-commandline-1.5.1.zip
         unzip swagger-coverage-commandline-1.5.1.zip
