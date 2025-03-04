@@ -33,11 +33,10 @@ runs:
       with:
         path: 'action'
         repository: 'alekskulakov/ci.actions.swaggercoverage'
-        sparse-checkout: 'src/swagger-coverage'
         
     - run: |
         ls -R .
-        mv ./src/swagger-coverage ./
+        mv ./action/src/swagger-coverage ./
       shell: bash
 
     - name: Download swagger-coverage tool
