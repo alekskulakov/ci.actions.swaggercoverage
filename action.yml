@@ -31,9 +31,12 @@ runs:
   steps:
     - uses: actions/checkout@v4
       with:
+        path: 'action'
         repository: 'alekskulakov/ci.actions.swaggercoverage'
-
-    - run: mv ./src/swagger-coverage ./
+        
+    - run: |
+        ls -R .
+        mv ./src/swagger-coverage ./
       shell: bash
 
     - name: Download swagger-coverage tool
