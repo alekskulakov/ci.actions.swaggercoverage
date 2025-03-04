@@ -48,7 +48,7 @@ runs:
         -s ${{ inputs.spec-path }} \
         -i ${{ inputs.input-path }} \
         -c ./swagger-coverage/config.minimal.json \
-        ${{ inputs.quiet && '-q' || ''}}
+        ${{ inputs.quiet && '-q' || ''}} ${{ inputs.verbose && '-v' || ''}} 
         cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Run coverage full
@@ -59,7 +59,7 @@ runs:
         -s ${{ inputs.spec-path }} \
         -i ${{ inputs.input-path }} \
         -c ./swagger-coverage/config.default.json \
-        ${{ inputs.quiet && '-q' || ''}}
+        ${{ inputs.quiet && '-q' || ''}} ${{ inputs.verbose && '-v' || ''}} 
 
     - name: Upload full coverage result
       if: ${{ inputs.use-full-config }}
