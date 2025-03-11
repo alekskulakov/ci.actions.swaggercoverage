@@ -25,6 +25,11 @@ inputs:
     description: 'Switch on the verbose mode'
     required: false
     default: false
+  env:
+    Base_Coverage_File: coverage-threshold.txt
+    Results_Coverage_File: swagger-coverage-results.json
+    Coverage_Run_Key: coverage-threshold-${{ github.run_id }}
+    Is_Default_Branch: ${{ (github.head_ref || github.ref_name) != github.event.repository.default_branch }}
 
 runs:
   using: "composite"
@@ -69,3 +74,67 @@ runs:
         path: |
           swagger-coverage-report.html
           swagger-coverage-results.json
+          
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22.14.0'
+
+    - uses: actions/cache/restore@v4
+      id: restore-cache
+      with: 
+        path: ${{ env.Base_Coverage_File }}
+        key: coverage-threshold
+
+    - id: calculate-threshold  
+      uses: actions/github-script@v7
+      with:
+        github-token: '${{ github.token }}'
+        script: |
+          const fs = require('fs');
+
+          const baseFile = '${{ env.Base_Coverage_File }}'
+          const resultsFile = '${{ env.Results_Coverage_File }}';
+
+          let threshold = 0;
+          let fullPercentage = 0;
+          if (!fs.existsSync(baseFile)) {
+            core.info(`File ${baseFile} not found!`);
+          } else {
+            threshold = fs.readFileSync(baseFile, "utf8");
+          }
+          core.info(`Base threshold: ${threshold}`);
+
+          if (!fs.existsSync(resultsFile)) {
+            core.info(`File ${resultsFile} not found!`);
+            return;
+          }
+
+          const resultsJson = fs.readFileSync(resultsFile, "utf8");
+          const resultsContent = JSON.parse(resultsJson);
+          const {all, full, party, empty} = resultsContent.coverageOperationMap.counter;
+
+          fullPercentage = Math.round((full/all*100 + Number.EPSILON) * 100) / 100;
+          let partialPercentage = Math.round((party/all*100 + Number.EPSILON) * 100) / 100;
+          let emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
+
+          const randomNumber = Math.random() * 100;
+          fullPercentage = Math.round(randomNumber * 100) / 100;
+
+          if(${{ env.Is_Default_Branch }}) {
+            core.info(`Write to ${baseFile} new threshold: ${fullPercentage}`);
+            fs.writeFileSync(baseFile, fullPercentage.toString());
+          }
+
+          const isPassed = fullPercentage >= threshold;
+          const failMsg = `:x: The coverage ${fullPercentage} is lower than ${threshold}`;
+          const successMsg = `:white_check_mark: The coverage ${fullPercentage} is equal or higher than ${threshold}`;
+
+          core.summary.addRaw(isPassed ? successMsg : failMsg, true);
+          core.summary.write({overwrite: false});
+
+    - uses: actions/cache/save@v4
+      if: ${{ env.Is_Default_Branch == 'true' 
+        && steps.restore-cache.outputs.cache-matched-key != env.Coverage_Run_Key }}
+      with:
+        path: ${{ env.Base_Coverage_File }}
+        key: ${{ env.Coverage_Run_Key }}
