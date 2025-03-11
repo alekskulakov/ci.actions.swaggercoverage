@@ -74,9 +74,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: swagger-coverage-result
-        path: |
-          swagger-coverage-report.html
-          swagger-coverage-results.json
+        path: swagger-coverage-report.html
           
     - uses: actions/setup-node@v4
       with:
