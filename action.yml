@@ -25,7 +25,7 @@ inputs:
     description: 'Switch on the verbose mode'
     required: false
     default: false
-  fail-if-lower:
+  throw-on-fail:
     description: 'Fail build if the coverage is lower than base'
     required: false
     default: 'false'
@@ -41,6 +41,7 @@ runs:
         echo "RESULTS_COVERAGE_FILE=swagger-coverage-results.json" >> "${GITHUB_OUTPUT}"
         echo "COVERAGE_RUN_KEY=coverage-threshold-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
         echo "IS_DEFAULT_BRANCH=${{ (github.head_ref || github.ref_name) == github.event.repository.default_branch }}" >> "${GITHUB_OUTPUT}"
+        echo "THROW_ON_FAIL=${{ (inputs.throw-on-fail || env.COVERAGE-THROW-ON-FAIL) == github.event.repository.default_branch }}" >> "${GITHUB_OUTPUT}"
 
     - name: Copy templates
       shell: bash
@@ -133,6 +134,7 @@ runs:
 
           core.summary.addRaw(isPassed ? successMsg : failMsg, true);
           core.summary.write({overwrite: false});
+          core.setOutput('passed', isPassed);
 
     - uses: actions/cache/save@v4
       if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' 
@@ -147,7 +149,8 @@ runs:
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Coverage validation
-      if: ${{ inputs.fail-if-lower == 'true' }}
+      if: ${{ (steps.globals.outputs.THROW_ON_FAIL == 'true') 
+        && (steps.calculate-threshold.outputs.passed == 'false') }}
       shell: bash
       run: |
         title='Coverage validation failed'
