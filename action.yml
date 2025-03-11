@@ -46,7 +46,14 @@ runs:
       shell: bash
       run: mv ${{ github.action_path }}/src/swagger-coverage .
 
+    - uses: actions/cache@v4
+      id: cache-tool
+      with:
+        path: swagger-coverage-commandline
+        key: swagger-coverage-commandline-1.5.1
+
     - name: Download swagger-coverage tool
+      if: steps.cache-tool.outputs.cache-hit != 'true'
       shell: bash
       run: |
         wget https://github.com/dodopizza/qa.tools.swaggercoverage/releases/download/1.5.1/swagger-coverage-commandline-1.5.1.zip
