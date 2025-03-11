@@ -1,6 +1,6 @@
 ﻿const args = process.argv.slice(2);
 
-const baseFile = args[0];
+const baseFile = args[0].toString();
 const resultsFile = args[1];
 const isDefaultBranch = args[2];
 
