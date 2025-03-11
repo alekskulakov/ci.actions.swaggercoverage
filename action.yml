@@ -44,9 +44,7 @@ runs:
 
     - name: Copy templates
       shell: bash
-      run: |
-        mv ${{ github.action_path }}/src/* .
-        ls -R .
+      run: mv ${{ github.action_path }}/src/* .
 
     - uses: actions/cache@v4
       id: cache-tool
@@ -101,6 +99,11 @@ runs:
       with: 
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
         key: coverage-threshold
+
+    - name: Copy templates2
+      shell: bash
+      run: ls -R .
+        
     - id: calculate-threshold2
       shell: bash
       run: node index.js      \
