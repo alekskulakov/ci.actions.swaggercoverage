@@ -121,9 +121,6 @@ runs:
           let partialPercentage = Math.round((party/all*100 + Number.EPSILON) * 100) / 100;
           let emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
 
-          const randomNumber = Math.random() * 100;
-          fullPercentage = Math.round(randomNumber * 100) / 100;
-
           if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}) {
             core.info(`Write to ${baseFile} new threshold: ${fullPercentage}`);
             fs.writeFileSync(baseFile, fullPercentage.toString());
@@ -142,3 +139,8 @@ runs:
       with:
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
         key: ${{ steps.globals.outputs.COVERAGE_RUN_KEY }}
+    
+    - name: Upload swagger coverage minimal
+      if: ${{ inputs.use-minimal-config }}
+      shell: bash
+      run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
