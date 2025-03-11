@@ -22,7 +22,6 @@
             <br/>
             <@summary.conditions counter=data.conditionCounter />
         </section>
-        <br/>
         <section id="details-section">
             <details>
                 <summary>
