@@ -130,10 +130,11 @@ runs:
           const isPassed = fullPercentage >= threshold;
           const failMsg = `:x: The coverage ${fullPercentage}% is lower than ${threshold}%`;
           const successMsg = `:white_check_mark: The coverage ${fullPercentage}% is equal or higher than ${threshold}%`;
-
-          core.summary.addRaw(isPassed ? successMsg : failMsg, true);
+          const message = isPassed ? successMsg : failMsg;
+          core.summary.addRaw(message, true);
           core.summary.write({overwrite: false});
           core.setOutput('passed', isPassed);
+          core.setOutput('message', message);
 
     - uses: actions/cache/save@v4
       if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' 
@@ -153,6 +154,6 @@ runs:
       shell: bash
       run: |
         title='Coverage validation failed'
-        message='Some message'
+        message='${{ steps.calculate-threshold.outputs.message }}'
         echo "::error title=${title}::${message}"
         exit 1
