@@ -58,7 +58,6 @@ runs:
         -i ${{ inputs.input-path }} \
         -c ./swagger-coverage/config.minimal.json \
         ${{ inputs.quiet == 'true' && '-q' || ''}} ${{ inputs.verbose == 'true' && '-v' || ''}} 
-        cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Run coverage full
       if: ${{ inputs.use-full-config }}
