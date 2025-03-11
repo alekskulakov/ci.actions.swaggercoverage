@@ -25,15 +25,19 @@ inputs:
     description: 'Switch on the verbose mode'
     required: false
     default: false
-  env:
-    Base_Coverage_File: coverage-threshold.txt
-    Results_Coverage_File: swagger-coverage-results.json
-    Coverage_Run_Key: coverage-threshold-${{ github.run_id }}
-    Is_Default_Branch: ${{ (github.head_ref || github.ref_name) != github.event.repository.default_branch }}
 
 runs:
   using: "composite"
   steps:
+    - name: Set globals
+      id: globals
+      shell: bash
+      run: |
+        echo "BASE_COVERAGE_FILE=coverage-threshold.txt" >> "${GITHUB_OUTPUT}"
+        echo "RESULTS_COVERAGE_FILE=swagger-coverage-results.json" >> "${GITHUB_OUTPUT}"
+        echo "COVERAGE_RUN_KEY=coverage-threshold-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
+        echo "IS_DEFAULT_BRANCH=${{ (github.head_ref || github.ref_name) == github.event.repository.default_branch }}" >> "${GITHUB_OUTPUT}"
+
     - name: Copy templates
       shell: bash
       run: mv ${{ github.action_path }}/src/swagger-coverage .
@@ -82,7 +86,7 @@ runs:
     - uses: actions/cache/restore@v4
       id: restore-cache
       with: 
-        path: ${{ env.Base_Coverage_File }}
+        path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
         key: coverage-threshold
 
     - id: calculate-threshold  
@@ -92,8 +96,8 @@ runs:
         script: |
           const fs = require('fs');
 
-          const baseFile = '${{ env.Base_Coverage_File }}'
-          const resultsFile = '${{ env.Results_Coverage_File }}';
+          const baseFile = '${{ steps.globals.outputs.BASE_COVERAGE_FILE }}'
+          const resultsFile = '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}';
 
           let threshold = 0;
           let fullPercentage = 0;
@@ -120,7 +124,7 @@ runs:
           const randomNumber = Math.random() * 100;
           fullPercentage = Math.round(randomNumber * 100) / 100;
 
-          if(${{ env.Is_Default_Branch }}) {
+          if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}) {
             core.info(`Write to ${baseFile} new threshold: ${fullPercentage}`);
             fs.writeFileSync(baseFile, fullPercentage.toString());
           }
@@ -133,8 +137,8 @@ runs:
           core.summary.write({overwrite: false});
 
     - uses: actions/cache/save@v4
-      if: ${{ env.Is_Default_Branch == 'true' 
-        && steps.restore-cache.outputs.cache-matched-key != env.Coverage_Run_Key }}
+      if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' 
+        && steps.restore-cache.outputs.cache-matched-key != steps.globals.outputs.COVERAGE_RUN_KEY }}
       with:
-        path: ${{ env.Base_Coverage_File }}
-        key: ${{ env.Coverage_Run_Key }}
+        path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
+        key: ${{ steps.globals.outputs.COVERAGE_RUN_KEY }}
