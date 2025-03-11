@@ -129,8 +129,8 @@ runs:
           }
 
           const isPassed = fullPercentage >= threshold;
-          const failMsg = `:x: The coverage ${fullPercentage} is lower than ${threshold}`;
-          const successMsg = `:white_check_mark: The coverage ${fullPercentage} is equal or higher than ${threshold}`;
+          const failMsg = `:x: The coverage ${fullPercentage}% is lower than ${threshold}%`;
+          const successMsg = `:white_check_mark: The coverage ${fullPercentage}% is equal or higher than ${threshold}%`;
 
           core.summary.addRaw(isPassed ? successMsg : failMsg, true);
           core.summary.write({overwrite: false});
