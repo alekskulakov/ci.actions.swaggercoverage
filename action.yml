@@ -99,16 +99,12 @@ runs:
       with: 
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
         key: coverage-threshold
-
-    - name: Copy templates2
-      shell: bash
-      run: ls -R .
         
     - id: calculate-threshold2
       shell: bash
       run: node index.js      \
-        ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}     \
-        ${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}  \
+        '${{ steps.globals.outputs.BASE_COVERAGE_FILE }}'     \
+        '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}'  \
         ${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}
     
     - id: calculate-threshold  
