@@ -25,6 +25,10 @@ inputs:
     description: 'Switch on the verbose mode'
     required: false
     default: false
+  fail-if-lower:
+    description: 'Fail build if the coverage is lower than base'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -141,3 +145,12 @@ runs:
       if: ${{ inputs.use-minimal-config }}
       shell: bash
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
+
+    - name: Coverage validation
+      if: ${{ inputs.fail-if-lower == 'true' }}
+      shell: bash
+      run: |
+        title='Coverage validation failed'
+        message='Some message'
+        echo "::error title=${title}::${message}"
+        exit 1
