@@ -9,6 +9,9 @@ const fs = require('fs');
 let threshold = 0;
 let fullPercentage = 0;
 
+console.log('Current working directory:', process.cwd());
+console.log('Script directory:', __dirname);
+
 if (!fs.existsSync(baseFile)) {
     console.log(`File ${baseFile} not found!`);
 } else {
