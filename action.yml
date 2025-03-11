@@ -44,7 +44,7 @@ runs:
 
     - name: Copy templates
       shell: bash
-      run: mv ${{ github.action_path }}/src/swagger-coverage .
+      run: mv ${{ github.action_path }}/src/* .
 
     - uses: actions/cache@v4
       id: cache-tool
@@ -101,7 +101,7 @@ runs:
         key: coverage-threshold
     - id: calculate-threshold2
       shell: bash
-      run: node ${{ github.action_path }}/src/index.js      \
+      run: node index.js      \
         ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}     \
         ${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}  \
         ${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}
