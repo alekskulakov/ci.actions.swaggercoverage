@@ -100,55 +100,55 @@ runs:
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
         key: coverage-threshold
         
-    - id: calculate-threshold2
+    - id: calculate-threshold
       shell: bash
-      run: node index.js '${{ steps.globals.outputs.BASE_COVERAGE_FILE }}' '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}' ${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}
+      run: node index.js "${{ steps.globals.outputs.BASE_COVERAGE_FILE }}" "${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}" "${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}"
     
-    - id: calculate-threshold  
-      uses: actions/github-script@v7
-      with:
-        github-token: '${{ github.token }}'
-        script: |
-          const fs = require('fs');
-
-          const baseFile = '${{ steps.globals.outputs.BASE_COVERAGE_FILE }}'
-          const resultsFile = '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}';
-
-          let threshold = 0;
-          let fullPercentage = 0;
-          if (!fs.existsSync(baseFile)) {
-            core.info(`File ${baseFile} not found!`);
-          } else {
-            threshold = fs.readFileSync(baseFile, "utf8");
-          }
-          core.info(`Base threshold: ${threshold}`);
-
-          if (!fs.existsSync(resultsFile)) {
-            core.info(`File ${resultsFile} not found!`);
-            return;
-          }
-
-          const resultsJson = fs.readFileSync(resultsFile, "utf8");
-          const resultsContent = JSON.parse(resultsJson);
-          const {all, full, party, empty} = resultsContent.coverageOperationMap.counter;
-
-          fullPercentage = Math.round((full/all*100 + Number.EPSILON) * 100) / 100;
-          let partialPercentage = Math.round((party/all*100 + Number.EPSILON) * 100) / 100;
-          let emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
-
-          if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}) {
-            core.info(`Write to ${baseFile} new threshold: ${fullPercentage}`);
-            fs.writeFileSync(baseFile, fullPercentage.toString());
-          }
-
-          const isPassed = fullPercentage >= threshold;
-          const failMsg = `:x: The coverage ${fullPercentage}% is lower than ${threshold}%`;
-          const successMsg = `:white_check_mark: The coverage ${fullPercentage}% is equal or higher than ${threshold}%`;
-          const message = isPassed ? successMsg : failMsg;
-          core.summary.addRaw(message, true);
-          core.summary.write({overwrite: false});
-          core.setOutput('passed', isPassed);
-          core.setOutput('message', message);
+#    - id: calculate-threshold  
+#      uses: actions/github-script@v7
+#      with:
+#        github-token: '${{ github.token }}'
+#        script: |
+#          const fs = require('fs');
+#
+#          const baseFile = '${{ steps.globals.outputs.BASE_COVERAGE_FILE }}'
+#          const resultsFile = '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}';
+#
+#          let threshold = 0;
+#          let fullPercentage = 0;
+#          if (!fs.existsSync(baseFile)) {
+#            core.info(`File ${baseFile} not found!`);
+#          } else {
+#            threshold = fs.readFileSync(baseFile, "utf8");
+#          }
+#          core.info(`Base threshold: ${threshold}`);
+#
+#          if (!fs.existsSync(resultsFile)) {
+#            core.info(`File ${resultsFile} not found!`);
+#            return;
+#          }
+#
+#          const resultsJson = fs.readFileSync(resultsFile, "utf8");
+#          const resultsContent = JSON.parse(resultsJson);
+#          const {all, full, party, empty} = resultsContent.coverageOperationMap.counter;
+#
+#          fullPercentage = Math.round((full/all*100 + Number.EPSILON) * 100) / 100;
+#          let partialPercentage = Math.round((party/all*100 + Number.EPSILON) * 100) / 100;
+#          let emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
+#
+#          if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}) {
+#            core.info(`Write to ${baseFile} new threshold: ${fullPercentage}`);
+#            fs.writeFileSync(baseFile, fullPercentage.toString());
+#          }
+#
+#          const isPassed = fullPercentage >= threshold;
+#          const failMsg = `:x: The coverage ${fullPercentage}% is lower than ${threshold}%`;
+#          const successMsg = `:white_check_mark: The coverage ${fullPercentage}% is equal or higher than ${threshold}%`;
+#          const message = isPassed ? successMsg : failMsg;
+#          core.summary.addRaw(message, true);
+#          core.summary.write({overwrite: false});
+#          core.setOutput('passed', isPassed);
+#          core.setOutput('message', message);
 
     - uses: actions/cache/save@v4
       if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' 
