@@ -176,8 +176,9 @@ runs:
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Coverage validation
-      if: ${{ (inputs.throw-on-fail == 'true')
-        && (steps.calculate-threshold.outputs.passed == 'false') }}
+      if: ${{ inputs.throw-on-fail == 'true'
+        && steps.calculate-threshold.outputs.passed == 'false'
+        && steps.globals.outputs.IS_DEFAULT_BRANCH == 'false' }}
       shell: bash
       run: |
         title='Coverage validation failed'
