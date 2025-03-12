@@ -180,7 +180,7 @@ runs:
       shell: bash
       continue-on-error: true
       run: |
-        npm i
+        npm install azure-kusto-data@6.0.3 azure-kusto-ingest@6.0.3
         node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}"
 
     - name: Coverage validation
