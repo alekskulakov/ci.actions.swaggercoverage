@@ -178,6 +178,7 @@ runs:
 
     - name: Save coverage to Kusto
       shell: bash
+      continue-on-error: true
       run: |
         npm i
         node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}"
