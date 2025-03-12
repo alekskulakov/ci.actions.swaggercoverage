@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "devDependencies": {
+    "azure-kusto-data": "6.0.3",
+    "azure-kusto-ingest": "6.0.3"
+  }
+}

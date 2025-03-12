@@ -44,7 +44,7 @@ runs:
 
     - name: Copy templates
       shell: bash
-      run: mv ${{ github.action_path }}/src/swagger-coverage .
+      run: mv ${{ github.action_path }}/src/* .
 
     - uses: actions/cache@v4
       id: cache-tool
@@ -162,6 +162,7 @@ runs:
           core.summary.write({overwrite: false});
           core.setOutput('passed', isPassed);
           core.setOutput('message', message);
+          core.setOutput('coverage', newCoverage);
 
     - uses: actions/cache/save@v4
       if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true'
@@ -174,6 +175,12 @@ runs:
       if: ${{ inputs.use-minimal-config }}
       shell: bash
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
+
+    - name: Save coverage to Kusto
+      shell: bash
+      run: |
+        npm i
+        node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}"
 
     - name: Coverage validation
       if: ${{ inputs.throw-on-fail == 'true'
