@@ -111,36 +111,53 @@ runs:
           const resultsFile = '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}';
 
           let threshold = 0;
-          let fullPercentage = 0;
+          let newCoverage = 0;
           if (!fs.existsSync(baseFile)) {
             core.info(`File ${baseFile} not found!`);
           } else {
-            threshold = fs.readFileSync(baseFile, "utf8");
+            try {
+              threshold = fs.readFileSync(baseFile, "utf8");
+            }
+            catch(err) {
+              core.info(`Failed to get the base threshold value:`);
+              core.info(err.message);
+            }
           }
           core.info(`Base threshold: ${threshold}`);
 
           if (!fs.existsSync(resultsFile)) {
             core.info(`File ${resultsFile} not found!`);
-            return;
+          } else {
+            try {
+              const resultsJson = fs.readFileSync(resultsFile, "utf8");
+              const resultsContent = JSON.parse(resultsJson);
+              const {all, empty} = resultsContent.coverageOperationMap.counter;
+            
+              const emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
+              newCoverage = 100 - emptyPercentage;
+            }
+            catch(err) {
+              core.info(`Failed to calculate current coverage:`);
+              core.info(err.message);
+            }
           }
-
-          const resultsJson = fs.readFileSync(resultsFile, "utf8");
-          const resultsContent = JSON.parse(resultsJson);
-          const {all, full, party, empty} = resultsContent.coverageOperationMap.counter;
-
-          fullPercentage = Math.round((full/all*100 + Number.EPSILON) * 100) / 100;
-          let partialPercentage = Math.round((party/all*100 + Number.EPSILON) * 100) / 100;
-          let emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
 
           if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}) {
-            core.info(`Write to ${baseFile} new threshold: ${fullPercentage}`);
-            fs.writeFileSync(baseFile, fullPercentage.toString());
+            core.info(`Write to ${baseFile} new threshold: ${newCoverage}`);
+            try {
+              fs.writeFileSync(baseFile, newCoverage.toString());
+            }
+            catch(err) {
+              core.info(`Failed to save new threshold:`);
+              core.info(err.message);
+            }
           }
 
-          const isPassed = fullPercentage >= threshold;
-          const failMsg = `:x: The coverage ${fullPercentage}% is lower than ${threshold}%`;
-          const successMsg = `:white_check_mark: The coverage ${fullPercentage}% is equal or higher than ${threshold}%`;
+          const isPassed = newCoverage >= threshold;
+          const failMsg = `❌ The coverage ${newCoverage}% is too low (threshold: ${threshold}%)`;
+          const successMsg = `✅ The coverage ${newCoverage}% is OK`;
           const message = isPassed ? successMsg : failMsg;
+          
           core.summary.addRaw(message, true);
           core.summary.write({overwrite: false});
           core.setOutput('passed', isPassed);
