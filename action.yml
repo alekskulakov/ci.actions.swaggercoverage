@@ -155,7 +155,7 @@ runs:
 
           const isPassed = newCoverage >= threshold;
           const failMsg = `❌ The coverage ${newCoverage}% is too low (threshold: ${threshold}%)`;
-          const successMsg = `✅ The coverage ${newCoverage}% is OK`;
+          const successMsg = `✅ The coverage ${newCoverage}% is OK (threshold: ${threshold}%)`;
           const message = isPassed ? successMsg : failMsg;
           
           core.summary.addRaw(message, true);
