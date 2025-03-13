@@ -29,6 +29,10 @@ inputs:
     description: 'Fail build if the coverage is lower than base'
     required: false
     default: false
+  skip-send-to-kusto:
+    description: 'Skip ingesting coverage to Kusto'
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -177,6 +181,8 @@ runs:
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Save coverage to Kusto
+      if: ${{ inputs.skip-send-to-kusto == 'false'
+        && steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' }}
       shell: bash
       continue-on-error: true
       run: |
@@ -185,8 +191,8 @@ runs:
 
     - name: Coverage validation
       if: ${{ inputs.throw-on-fail == 'true'
-        && steps.calculate-threshold.outputs.passed == 'false'
-        && steps.globals.outputs.IS_DEFAULT_BRANCH == 'false' }}
+        && steps.globals.outputs.IS_DEFAULT_BRANCH == 'false'
+        && steps.calculate-threshold.outputs.passed == 'false' }}
       shell: bash
       run: |
         title='Coverage validation failed'
