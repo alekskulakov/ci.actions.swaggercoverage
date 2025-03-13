@@ -64,7 +64,5 @@ if (missingVars.length > 0) {
     console.log(`Ingesting new coverage: ${JSON.stringify(data)}`);
     ingestClient.ingestFromStream(stream, IngestionProperties)
         .then(() => console.log("Ingestion successful"))
-        .catch(error => {
-            console.error("Error ingesting data into Kusto:", error);
-        });
+        .catch(error => console.error("Error ingesting data into Kusto:", error));
 }
