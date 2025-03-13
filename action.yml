@@ -181,7 +181,7 @@ runs:
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Save coverage to Kusto
-      if: ${{ inputs.skip-send-to-kusto == 'false'
+      if: ${{ inputs.skip-send-to-kusto != 'true'
         && steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' }}
       shell: bash
       continue-on-error: true
