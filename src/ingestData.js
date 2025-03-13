@@ -11,10 +11,12 @@ const args = process.argv.slice(2);
 
 const repository = args[0];
 const coverage = args[1];
+const runId = args[2];
 
 const data = {
     repository: repository,
     coverage: coverage,
+    runId: runId,
     createdAt: new Date().toISOString()
 };
 const jsonString = JSON.stringify(data);
@@ -23,7 +25,7 @@ const stream = Readable.from([jsonString]);
 const requiredEnvVars = [
     "KUSTO_AAD_APP_ID",
     "KUSTO_APP_KEY",
-    "KUSTO_INGEST_URI",
+    "KUSTO_DEV_URI",
     "KUSTO_AAD_AUTHORITY_ID"
 ];
 
@@ -36,7 +38,7 @@ if (missingVars.length > 0) {
 
     const KUSTO_AAD_APP_ID = process.env.KUSTO_AAD_APP_ID;
     const KUSTO_APP_KEY = process.env.KUSTO_APP_KEY;
-    const KUSTO_INGEST_URI = process.env.KUSTO_INGEST_URI;
+    const KUSTO_INGEST_URI = `https://ingest-${process.env.KUSTO_DEV_URI}`;
     const KUSTO_AAD_AUTHORITY_ID = process.env.KUSTO_AAD_AUTHORITY_ID;
     
     const kustoDatabase  = "metrics";

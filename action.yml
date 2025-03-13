@@ -181,7 +181,7 @@ runs:
       continue-on-error: true
       run: |
         npm install azure-kusto-data@6.0.3 azure-kusto-ingest@6.0.3
-        node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}"
+        node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}" "${{ github.run_id }}"
 
     - name: Coverage validation
       if: ${{ inputs.throw-on-fail == 'true'
