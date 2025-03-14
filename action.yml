@@ -167,9 +167,11 @@ runs:
           core.setOutput('passed', isPassed);
           core.setOutput('message', message);
           core.setOutput('coverage', newCoverage);
+          core.setOutput('coverage-changed', newCoverage != threshold);
 
     - uses: actions/cache/save@v4
       if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true'
+        && steps.calculate-threshold.outputs.coverage-changed == 'true'
         && steps.restore-cache.outputs.cache-matched-key != steps.globals.outputs.COVERAGE_RUN_KEY }}
       with:
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
