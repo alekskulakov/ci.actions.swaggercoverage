@@ -161,13 +161,19 @@ runs:
           const failMsg = `❌ The coverage ${newCoverage}% is too low (threshold: ${threshold}%)`;
           const successMsg = `✅ The coverage ${newCoverage}% is OK (threshold: ${threshold}%)`;
           const message = isPassed ? successMsg : failMsg;
+          const isChanged = newCoverage != threshold;
           
+          if (isChanged) {
+            console.log(`The coverage changed from ${threshold} to ${newCoverage}`);
+          } else {
+            console.log("The coverage didn't change.");
+          }
           core.summary.addRaw(message, true);
           core.summary.write({overwrite: false});
           core.setOutput('passed', isPassed);
           core.setOutput('message', message);
           core.setOutput('coverage', newCoverage);
-          core.setOutput('coverage-changed', newCoverage != threshold);
+          core.setOutput('coverage-changed', isChanged);
 
     - uses: actions/cache/save@v4
       if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true'
