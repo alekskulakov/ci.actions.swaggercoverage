@@ -25,20 +25,47 @@ inputs:
     description: 'Switch on the verbose mode'
     required: false
     default: false
+  throw-on-fail:
+    description: 'Fail build if the coverage is lower than base'
+    required: false
+    default: false
+  skip-send-to-kusto:
+    description: 'Skip ingesting coverage to Kusto'
+    required: false
+    default: false
 
 runs:
   using: "composite"
   steps:
+    - name: Set globals
+      id: globals
+      shell: bash
+      run: |
+        echo "BASE_COVERAGE_FILE=coverage-threshold.txt" >> "${GITHUB_OUTPUT}"
+        echo "RESULTS_COVERAGE_FILE=swagger-coverage-results.json" >> "${GITHUB_OUTPUT}"
+        echo "COVERAGE_RUN_KEY=coverage-threshold-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
+        echo "IS_DEFAULT_BRANCH=${{ (github.head_ref || github.ref_name) == github.event.repository.default_branch }}" >> "${GITHUB_OUTPUT}"
+
     - name: Copy templates
       shell: bash
-      run: mv ${{ github.action_path }}/src/swagger-coverage .
+      run: mv ${{ github.action_path }}/src/* .
+
+    - uses: actions/cache@v4
+      id: cache-tool
+      with:
+        path: swagger-coverage-commandline
+        key: swagger-coverage-commandline-1.5.1
 
     - name: Download swagger-coverage tool
+      if: steps.cache-tool.outputs.cache-hit != 'true'
       shell: bash
       run: |
         wget https://github.com/dodopizza/qa.tools.swaggercoverage/releases/download/1.5.1/swagger-coverage-commandline-1.5.1.zip
         unzip swagger-coverage-commandline-1.5.1.zip
         mv swagger-coverage-commandline-1.5.1 swagger-coverage-commandline
+
+    - shell: bash
+      run: mkdir -p ${{ inputs.input-path }}
 
     - name: Run swagger coverage minimal
       if: ${{ inputs.use-minimal-config }}
@@ -49,7 +76,6 @@ runs:
         -i ${{ inputs.input-path }} \
         -c ./swagger-coverage/config.minimal.json \
         ${{ inputs.quiet == 'true' && '-q' || ''}} ${{ inputs.verbose == 'true' && '-v' || ''}} 
-        cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
     - name: Run coverage full
       if: ${{ inputs.use-full-config }}
@@ -66,6 +92,119 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: swagger-coverage-result
-        path: |
-          swagger-coverage-report.html
-          swagger-coverage-results.json
+        path: swagger-coverage-report.html
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22.14.0'
+
+    - uses: actions/cache/restore@v4
+      id: restore-cache
+      with:
+        path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
+        key: coverage-threshold
+
+    - id: calculate-threshold
+      uses: actions/github-script@v7
+      with:
+        github-token: '${{ github.token }}'
+        script: |
+          const fs = require('fs');
+
+          const baseFile = '${{ steps.globals.outputs.BASE_COVERAGE_FILE }}'
+          const resultsFile = '${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}';
+
+          let threshold = 0;
+          let newCoverage = 0;
+          if (!fs.existsSync(baseFile)) {
+            core.info(`File ${baseFile} not found!`);
+          } else {
+            try {
+              threshold = fs.readFileSync(baseFile, "utf8");
+            }
+            catch(err) {
+              core.info(`Failed to get the base threshold value:`);
+              core.info(err.message);
+            }
+          }
+          core.info(`Base threshold: ${threshold}`);
+
+          if (!fs.existsSync(resultsFile)) {
+            core.info(`File ${resultsFile} not found!`);
+          } else {
+            try {
+              const resultsJson = fs.readFileSync(resultsFile, "utf8");
+              const resultsContent = JSON.parse(resultsJson);
+              const {all, empty} = resultsContent.coverageOperationMap.counter;
+            
+              const emptyPercentage = Math.round((empty/all*100 + Number.EPSILON) * 100) / 100;
+              newCoverage = 100 - emptyPercentage;
+            }
+            catch(err) {
+              core.info(`Failed to calculate current coverage:`);
+              core.info(err.message);
+            }
+          }
+
+          const isChanged = newCoverage != threshold;
+          if (isChanged) {
+            console.log(`The coverage changed from ${threshold} to ${newCoverage}`);
+          } else {
+            console.log("The coverage didn't change.");
+          }
+          
+          if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }} && isChanged) {
+            core.info(`Write to ${baseFile} new coverage: ${newCoverage}`);
+            try {
+              fs.writeFileSync(baseFile, newCoverage.toString());
+            }
+            catch(err) {
+              core.info(`Failed to save new threshold:`);
+              core.info(err.message);
+            }
+          }
+
+          const isPassed = newCoverage >= threshold;
+          const failMsg = `❌ The coverage ${newCoverage}% is too low (threshold: ${threshold}%)`;
+          const successMsg = `✅ The coverage ${newCoverage}% is OK (threshold: ${threshold}%)`;
+          const message = isPassed ? successMsg : failMsg;
+          
+          core.summary.addRaw(message, true);
+          core.summary.write({overwrite: false});
+          core.setOutput('passed', isPassed);
+          core.setOutput('message', message);
+          core.setOutput('coverage', newCoverage);
+          core.setOutput('coverage-changed', isChanged);
+
+    - uses: actions/cache/save@v4
+      if: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH == 'true'
+        && steps.calculate-threshold.outputs.coverage-changed == 'true'
+        && steps.restore-cache.outputs.cache-matched-key != steps.globals.outputs.COVERAGE_RUN_KEY }}
+      with:
+        path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
+        key: ${{ steps.globals.outputs.COVERAGE_RUN_KEY }}
+
+    - name: Upload swagger coverage minimal
+      if: ${{ inputs.use-minimal-config }}
+      shell: bash
+      run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
+
+    - name: Save coverage to Kusto
+      if: ${{ inputs.skip-send-to-kusto != 'true'
+        && steps.globals.outputs.IS_DEFAULT_BRANCH == 'true' }}
+      shell: bash
+      continue-on-error: true
+      run: |
+        npm install azure-kusto-data@6.0.3 azure-kusto-ingest@6.0.3
+        node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}" "${{ github.run_id }}"
+
+    - name: Coverage validation
+      if: ${{ inputs.throw-on-fail == 'true'
+        && steps.globals.outputs.IS_DEFAULT_BRANCH == 'false'
+        && steps.calculate-threshold.outputs.passed == 'false' }}
+      shell: bash
+      run: |
+        title='Coverage validation failed'
+        message='${{ steps.calculate-threshold.outputs.message }}'
+        echo "::error title=${title}::${message}"
+        exit 1

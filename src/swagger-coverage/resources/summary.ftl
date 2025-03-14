@@ -30,48 +30,48 @@
 </#macro>
 
 <#macro conditions counter>
-    <div class="row">
-        <div class="col-12">
-            <h4>${i18["summary.conditions"]}</h4>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <div class="alert alert-primary" role="alert">
-                <div class="row">
-                    <div class="col-12">
-                        <strong>${i18["summary.conditions.total"]}: ${counter.all}</strong>
+    <details>
+        <summary>
+            <strong>${i18["summary.conditions"]}</strong>
+        </summary>
+        <div class="row">
+            <div class="col-sm">
+                <div class="alert alert-primary" role="alert">
+                    <div class="row">
+                        <div class="col-12">
+                            ${i18["summary.conditions.total"]}: ${counter.all}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="alert alert-success" role="alert">
+                    <div class="row">
+                        <div class="col-12">
+                            <#if counter.all gt 0>
+                            ${i18["summary.conditions.covered"]}: ${counter.covered * 100 / counter.all}% (${counter.covered}/${counter.all})
+                            <#else>
+                            ${i18["summary.conditions.covered"]}: 0% (0)
+                            </#if>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="alert alert-danger" role="alert">
+                    <div class="row">
+                        <div class="col-12">
+                            <#if counter.all gt 0>
+                            ${i18["summary.conditions.uncovered"]}:  ${(counter.all-counter.covered) * 100 / counter.all}% (${counter.all-counter.covered}/${counter.all})
+                            <#else>
+                            ${i18["summary.conditions.uncovered"]}:  0% (0)
+                            </#if>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm">
-            <div class="alert alert-success" role="alert">
-                <div class="row">
-                    <div class="col-12">
-                        <#if counter.all gt 0>
-                        <strong>${i18["summary.conditions.covered"]}: ${counter.covered * 100 / counter.all}% (${counter.covered}/${counter.all})</strong>
-                        <#else>
-                        <strong>${i18["summary.conditions.covered"]}: 0% (0)</strong>
-                        </#if>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm">
-            <div class="alert alert-danger" role="alert">
-                <div class="row">
-                    <div class="col-12">
-                        <#if counter.all gt 0>
-                        <strong>${i18["summary.conditions.uncovered"]}:  ${(counter.all-counter.covered) * 100 / counter.all}% (${counter.all-counter.covered}/${counter.all})</strong>
-                        <#else>
-                        <strong>${i18["summary.conditions.uncovered"]}:  0% (0)</strong>
-                        </#if>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </details>
 </#macro>
 
 <#macro tags tagsDetail tagCounter>

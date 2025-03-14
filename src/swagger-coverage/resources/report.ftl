@@ -17,10 +17,11 @@
                 </div>
             </div>
             <@summary.operations operationCoveredMap=data.coverageOperationMap />
+             <br/>
             <@summary.calls data=data />
+            <br/>
             <@summary.conditions counter=data.conditionCounter />
         </section>
-        <br/>
         <section id="details-section">
             <details>
                 <summary>
