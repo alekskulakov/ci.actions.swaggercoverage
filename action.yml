@@ -12,27 +12,27 @@ inputs:
   use-minimal-config:
     description: 'Use minimal report template'
     required: false
-    default: true
+    default: 'true'
   use-full-config:
     description: 'Use full report template'
     required: false
-    default: true
+    default: 'true'
   quiet:
     description: 'Switch on the quiet mode'
     required: false
-    default: true
+    default: 'true'
   verbose:
     description: 'Switch on the verbose mode'
     required: false
-    default: false
+    default: 'false'
   throw-on-fail:
     description: 'Fail build if the coverage is lower than base'
     required: false
-    default: false
+    default: 'false'
   skip-send-to-kusto:
     description: 'Skip ingesting coverage to Kusto'
     required: false
-    default: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -71,7 +71,7 @@ runs:
         mv ${{ inputs.spec-path }} ./swagger-coverage/swagger.json
 
     - name: Run swagger coverage minimal
-      if: ${{ inputs.use-minimal-config }}
+      if: ${{ inputs.use-minimal-config == 'true' }}
       shell: bash
       run: |
         ./swagger-coverage-commandline/bin/swagger-coverage-commandline \
@@ -81,7 +81,7 @@ runs:
         ${{ inputs.quiet == 'true' && '-q' || ''}} ${{ inputs.verbose == 'true' && '-v' || ''}} 
 
     - name: Run coverage full
-      if: ${{ inputs.use-full-config }}
+      if: ${{ inputs.use-full-config == 'true'}}
       shell: bash
       run: |
         ./swagger-coverage-commandline/bin/swagger-coverage-commandline \
@@ -91,7 +91,7 @@ runs:
         ${{ inputs.quiet == 'true' && '-q' || ''}} ${{ inputs.verbose == 'true' && '-v' || ''}}
 
     - name: Upload full coverage report
-      if: ${{ inputs.use-full-config }}
+      if: ${{ inputs.use-full-config == 'true'}}
       uses: actions/upload-artifact@v4
       with:
         name: swagger-coverage-result
@@ -187,7 +187,7 @@ runs:
         key: ${{ steps.globals.outputs.COVERAGE_RUN_KEY }}
 
     - name: Upload swagger coverage minimal
-      if: ${{ inputs.use-minimal-config }}
+      if: ${{ inputs.use-minimal-config == 'true' }}
       shell: bash
       run: cat swagger-coverage-report.min.html >> $GITHUB_STEP_SUMMARY
 
