@@ -185,7 +185,7 @@ runs:
           
           const serviceName = core.getInput('service-name');
           if (serviceName) {
-            await core.summary.addRaw(`${serviceName}:`, true);
+            core.summary.addRaw(`${serviceName}:`, true);
           }
           core.summary.addRaw(message, true);
           core.summary.write({overwrite: false});
