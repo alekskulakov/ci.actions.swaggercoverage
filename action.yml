@@ -41,7 +41,7 @@ runs:
       id: globals
       shell: bash
       run: |
-        echo "SPEC_LOCAL_PATH=./swagger-coverage/swagger.json" >> "${GITHUB_OUTPUT}"
+        echo "SPEC_LOCAL_PATH=./swagger-coverage/servicename.json" >> "${GITHUB_OUTPUT}"
         echo "BASE_COVERAGE_FILE=coverage-threshold.txt" >> "${GITHUB_OUTPUT}"
         echo "RESULTS_COVERAGE_FILE=swagger-coverage-results.json" >> "${GITHUB_OUTPUT}"
         echo "COVERAGE_RUN_KEY=coverage-threshold-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
@@ -64,6 +64,7 @@ runs:
     - shell: bash
       run: |
         mkdir -p ${{ inputs.input-path }}
+        mkdir -p ./swagger-coverage
         mv ${{ inputs.spec-path }} ${{ steps.globals.outputs.SPEC_LOCAL_PATH }}
 
     - name: Run swagger coverage minimal
