@@ -170,6 +170,7 @@ runs:
             console.log("The coverage didn't change.");
           }
 
+          const isDefaultBranch = process.env.IS_DEFAULT_BRANCH === 'true';
           if (isDefaultBranch && isChanged) {
             core.info(`Write to ${baseFile} new threshold: ${newCoverage}`);
             try {
