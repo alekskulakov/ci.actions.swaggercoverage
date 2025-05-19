@@ -193,7 +193,7 @@ runs:
           } else {
             core.summary.addHeading(`Coverage report`);
           }
-          core.summary.addParagraph(message);
+          core.summary.addRaw(message, true);
           core.summary.write({ overwrite: false });
 
           core.setOutput('passed', isPassed);
