@@ -33,6 +33,10 @@ inputs:
     description: 'Skip ingesting coverage to Kusto'
     required: false
     default: 'false'
+  service-name:
+    description: 'Service name'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -41,7 +45,14 @@ runs:
       id: globals
       shell: bash
       run: |
-        echo "SPEC_LOCAL_PATH=./swagger-coverage/servicename.json" >> "${GITHUB_OUTPUT}"
+        service_name="${{ inputs.service-name }}"
+        repo_name="${GITHUB_REPOSITORY##*/}"
+        fixed_service_name="${service_name:-$repo_name}"
+    
+        echo "SERVICE_NAME=$service_name" >> "${GITHUB_OUTPUT}"
+        echo "SPEC_LOCAL_PATH=./swagger-coverage/${fixed_service_name}.json" >> "${GITHUB_OUTPUT}"
+        echo "ARTIFACT_NAME=swagger-coverage-result${service_name:+-$service_name}" >> "${GITHUB_OUTPUT}"
+        echo "CACHE_KEY=coverage-threshold${service_name:+-$service_name}" >> "${GITHUB_OUTPUT}"
         echo "BASE_COVERAGE_FILE=coverage-threshold.txt" >> "${GITHUB_OUTPUT}"
         echo "RESULTS_COVERAGE_FILE=swagger-coverage-results.json" >> "${GITHUB_OUTPUT}"
         echo "COVERAGE_RUN_KEY=coverage-threshold-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
@@ -94,7 +105,7 @@ runs:
       if: ${{ inputs.use-full-config == 'true'}}
       uses: actions/upload-artifact@v4
       with:
-        name: swagger-coverage-result
+        name: ${{ steps.globals.outputs.ARTIFACT_NAME }}
         path: swagger-coverage-report.html
 
     - uses: actions/setup-node@v4.2.0
@@ -105,7 +116,7 @@ runs:
       id: restore-cache
       with:
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
-        key: coverage-threshold
+        key: ${{ steps.globals.outputs.CACHE_KEY }}
 
     - id: calculate-threshold
       uses: actions/github-script@v7
@@ -171,6 +182,10 @@ runs:
           const successMsg = `✅ The coverage ${newCoverage}% is OK (threshold: ${threshold}%)`;
           const message = isPassed ? successMsg : failMsg;
           
+          const serviceName = core.getInput('service-name');
+          if (serviceName) {
+            await core.summary.addRaw(`${serviceName}:`, true);
+          }
           core.summary.addRaw(message, true);
           core.summary.write({overwrite: false});
           core.setOutput('passed', isPassed);
