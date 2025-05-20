@@ -64,7 +64,11 @@ runs:
           identifier="$identifier:$service_name"
         fi
         echo "KUSTO_IDENTIFIER=$identifier" >> "${GITHUB_OUTPUT}"
-        echo "KUSTO_IDENTIFIER=$identifier"
+
+    - name: Show all globals outputs
+      shell: bash
+      run: |
+        echo '${{ toJson(steps.globals.outputs) }}' | jq
 
     - name: Copy templates
       shell: bash
