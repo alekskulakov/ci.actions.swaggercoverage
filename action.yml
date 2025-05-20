@@ -47,7 +47,7 @@ runs:
       run: |
         service_name="${{ inputs.service-name }}"
         repo_name="${GITHUB_REPOSITORY##*/}"
-        fixed_service_name="${service_name:-$repo_name}"
+        fixed_service_name="${service_name:-swagger}"
         cache_key="coverage-threshold${service_name:+-$service_name}"
         
         echo "SERVICE_NAME=$service_name" >> "${GITHUB_OUTPUT}"
