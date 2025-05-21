@@ -33,6 +33,10 @@ inputs:
     description: 'Skip ingesting coverage to Kusto'
     required: false
     default: 'false'
+  service-name:
+    description: 'Service name'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -41,15 +45,34 @@ runs:
       id: globals
       shell: bash
       run: |
-        echo "SPEC_LOCAL_PATH=./swagger-coverage/swagger.json" >> "${GITHUB_OUTPUT}"
+        service_name="${{ inputs.service-name }}"
+        repo_name="${GITHUB_REPOSITORY##*/}"
+        fixed_service_name="${service_name:-swagger}"
+        cache_key="coverage-threshold${service_name:+-$service_name}"
+        
+        echo "SERVICE_NAME=$service_name" >> "${GITHUB_OUTPUT}"
+        echo "SPEC_LOCAL_PATH=./swagger-coverage/${fixed_service_name}.json" >> "${GITHUB_OUTPUT}"
+        echo "ARTIFACT_NAME=swagger-coverage-result${service_name:+-$service_name}" >> "${GITHUB_OUTPUT}"
+        echo "CACHE_KEY=$cache_key" >> "${GITHUB_OUTPUT}"
         echo "BASE_COVERAGE_FILE=coverage-threshold.txt" >> "${GITHUB_OUTPUT}"
         echo "RESULTS_COVERAGE_FILE=swagger-coverage-results.json" >> "${GITHUB_OUTPUT}"
-        echo "COVERAGE_RUN_KEY=coverage-threshold-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
+        echo "COVERAGE_RUN_KEY=$cache_key-${{ github.run_id }}" >> "${GITHUB_OUTPUT}"
         echo "IS_DEFAULT_BRANCH=${{ (github.head_ref || github.ref_name) == github.event.repository.default_branch }}" >> "${GITHUB_OUTPUT}"
+        
+        identifier="$GITHUB_REPOSITORY"
+        if [ -n "$service_name" ]; then
+          identifier="$identifier:$service_name"
+        fi
+        echo "KUSTO_IDENTIFIER=$identifier" >> "${GITHUB_OUTPUT}"
+
+    - name: Show all globals outputs
+      shell: bash
+      run: |
+        echo '${{ toJson(steps.globals.outputs) }}' | jq
 
     - name: Copy templates
       shell: bash
-      run: mv ${{ github.action_path }}/src/* .
+      run: cp -r ${{ github.action_path }}/src/. .
 
     - uses: actions/cache@v4
       id: cache-tool
@@ -68,7 +91,7 @@ runs:
     - shell: bash
       run: |
         mkdir -p ${{ inputs.input-path }}
-        mv ${{ inputs.spec-path }} ./swagger-coverage/swagger.json
+        mv ${{ inputs.spec-path }} ${{ steps.globals.outputs.SPEC_LOCAL_PATH }}
 
     - name: Run swagger coverage minimal
       if: ${{ inputs.use-minimal-config == 'true' }}
@@ -94,7 +117,7 @@ runs:
       if: ${{ inputs.use-full-config == 'true'}}
       uses: actions/upload-artifact@v4
       with:
-        name: swagger-coverage-result
+        name: ${{ steps.globals.outputs.ARTIFACT_NAME }}
         path: swagger-coverage-report.html
 
     - uses: actions/setup-node@v4.2.0
@@ -105,10 +128,13 @@ runs:
       id: restore-cache
       with:
         path: ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
-        key: coverage-threshold
+        key: ${{ steps.globals.outputs.CACHE_KEY }}
 
     - id: calculate-threshold
       uses: actions/github-script@v7
+      env:
+        SERVICE_NAME: ${{ inputs.service-name }}
+        IS_DEFAULT_BRANCH: ${{ steps.globals.outputs.IS_DEFAULT_BRANCH }}
       with:
         github-token: '${{ github.token }}'
         script: |
@@ -155,7 +181,8 @@ runs:
             console.log("The coverage didn't change.");
           }
 
-          if(${{ steps.globals.outputs.IS_DEFAULT_BRANCH }} && isChanged) {
+          const isDefaultBranch = process.env.IS_DEFAULT_BRANCH === 'true';
+          if (isDefaultBranch && isChanged) {
             core.info(`Write to ${baseFile} new threshold: ${newCoverage}`);
             try {
               fs.writeFileSync(baseFile, newCoverage.toString());
@@ -170,9 +197,16 @@ runs:
           const failMsg = `❌ The coverage ${newCoverage}% is too low (threshold: ${threshold}%)`;
           const successMsg = `✅ The coverage ${newCoverage}% is OK (threshold: ${threshold}%)`;
           const message = isPassed ? successMsg : failMsg;
-          
+
+          const serviceName = process.env.SERVICE_NAME;
+          if (serviceName) {
+            core.summary.addHeading(`Coverage report for ${serviceName}`);
+          } else {
+            core.summary.addHeading(`Coverage report`);
+          }
           core.summary.addRaw(message, true);
-          core.summary.write({overwrite: false});
+          core.summary.write({ overwrite: false });
+
           core.setOutput('passed', isPassed);
           core.setOutput('message', message);
           core.setOutput('coverage', newCoverage);
@@ -199,7 +233,7 @@ runs:
       continue-on-error: true
       run: |
         npm install azure-kusto-data@6.0.3 azure-kusto-ingest@6.0.3
-        node ingestData.js "${{ github.repository }}" "${{ steps.calculate-threshold.outputs.coverage }}" "${{ github.run_id }}"
+        node ingestData.js "${{ steps.globals.outputs.KUSTO_IDENTIFIER }}" "${{ steps.calculate-threshold.outputs.coverage }}" "${{ github.run_id }}"
 
     - name: Coverage validation
       if: ${{ inputs.throw-on-fail == 'true'
