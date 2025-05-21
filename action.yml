@@ -92,6 +92,8 @@ runs:
       run: |
         mkdir -p ${{ inputs.input-path }}
         mv ${{ inputs.spec-path }} ${{ steps.globals.outputs.SPEC_LOCAL_PATH }}
+        rm -f ${{ steps.globals.outputs.BASE_COVERAGE_FILE }}
+        rm -f ${{ steps.globals.outputs.RESULTS_COVERAGE_FILE }}
 
     - name: Run swagger coverage minimal
       if: ${{ inputs.use-minimal-config == 'true' }}
